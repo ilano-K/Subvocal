@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Subvocal",
+  "version": "0.1.0",
+  "identifier": "com.subvocal.app",
+  "build": { "beforeDevCommand": "npm run dev", "devUrl": "http://localhost:5173", "beforeBuildCommand": "npm run build", "frontendDist": "../dist" },
+  "app": {
+    "windows": [
+      { "label": "main", "title": "Subvocal", "width": 1280, "height": 820, "decorations": true },
+      { "label": "hud", "title": "Subvocal Mini-HUD", "url": "/?hud=1", "width": 860, "height": 180, "decorations": false, "transparent": true, "alwaysOnTop": true, "skipTaskbar": true, "resizable": false }
+    ],
+    "security": { "csp": null }
+  },
+  "bundle": { "active": true, "targets": "all", "icon": ["icons/icon.png"] }
+}

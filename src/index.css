@@ -1,0 +1,137 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { scrollbar-width: thin; scrollbar-color: #E5DDD3 transparent; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: #E5DDD3; border-radius: 9999px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+:root { color-scheme: light; }
+html.dark { color-scheme: dark; }
+
+body {
+  background: #FBF9F5;
+  color: #1C1512;
+  font-family: Inter, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+html.dark body {
+  background: #141211;
+  color: #e9e1dd;
+}
+html.dark {
+  scrollbar-color: #2d2723 transparent;
+}
+html.dark ::-webkit-scrollbar-thumb { background: #2d2723; }
+
+.acoustic-grid {
+  background-size: 28px 28px;
+  background-image:
+    linear-gradient(to right, rgba(194,65,12,0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(194,65,12,0.04) 1px, transparent 1px);
+}
+html.dark .acoustic-grid {
+  background-image:
+    linear-gradient(to right, rgba(249,115,22,0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(249,115,22,0.06) 1px, transparent 1px);
+}
+.maple-glow { box-shadow: 0 4px 20px -2px rgba(194,65,12,0.25), 0 2px 6px -1px rgba(217,119,6,0.2); }
+html.dark .maple-glow { box-shadow: 0 4px 20px -2px rgba(249,115,22,0.28), 0 12px 28px rgba(12,10,9,0.6); }
+
+/* Dark inputs — stitch: field #141211 + border #352e29 / focus #f97316 + halo rgba(249,115,22,0.2) */
+html.dark input, html.dark textarea, html.dark select {
+  background-color: #141211;
+  border-color: #352e29;
+  color: #e9e1dd;
+}
+html.dark input::placeholder, html.dark textarea::placeholder { color: #6e5e55; }
+html.dark input:focus, html.dark textarea:focus, html.dark select:focus {
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249,115,22,0.2);
+}
+
+/* — Dark surfaces — exact Stitch palette (google-stitch-dark.html) — */
+html.dark [class*="bg-white"] { background-color: #221e1b !important; }
+html.dark [class*="bg-[#FBF9F5]"] { background-color: #141211 !important; }
+html.dark [class*="bg-[#F5EFE6]"] { background-color: #1b1816 !important; }
+html.dark [class*="bg-[#F7F3EE]"] { background-color: #221f1d !important; }
+html.dark [class*="bg-[#FFECE7]"] { background-color: #1a1715 !important; }
+html.dark [class*="bg-[#FFFBF6]"] { background-color: #1e1b19 !important; }
+html.dark [class*="bg-[#FFF7ED]"] { background-color: #1a1715 !important; }
+html.dark [class*="bg-[#FFF1EC]"] { background-color: #1a1715 !important; }
+html.dark [class*="bg-[#FAF6F0]"] { background-color: #1e1b19 !important; }
+html.dark [class*="bg-[#F7F3EE]/60"] { background-color: rgba(27,24,22,0.85) !important; }
+html.dark [class*="bg-[#F7F3EE]/50"] { background-color: rgba(27,24,22,0.75) !important; }
+html.dark [class*="bg-[#F7F3EE]/70"] { background-color: rgba(27,24,22,0.85) !important; }
+html.dark [class*="bg-[#F3EFEA]"] { background-color: #141211 !important; }
+html.dark [class*="bg-orange-50"] { background-color: rgba(249,115,22,0.12) !important; }
+html.dark [class*="bg-orange-100"] { background-color: rgba(234,88,12,0.18) !important; }
+html.dark [class*="bg-[#EFE9E0]"] { background-color: #1a1715 !important; }
+html.dark [class*="bg-[#1e1b19]"] { background-color: #221e1b !important; }
+
+/* Dark borders — stitch uses #352e29 for inactive cards but that still reads as outline.
+   Make card/panel outlines transparent and rely on bg contrast + shadow; keep header/search hairline. */
+html.dark [class*="border-[#E5DDD3]"] { border-color: transparent !important; } /* cards → no outline */
+html.dark [class*="border-[#E2D8CC]"] { border-color: #352e29 !important; } /* search input — keep subtle timber */
+html.dark [class*="border-[#E6DDD2]"] { border-color: #2d2723 !important; } /* header/nav hairline */
+html.dark [class*="border-[#F0E8DE]"] { border-color: transparent !important; } /* card dividers → transparent */
+html.dark [class*="border-[#DDD2C4]"] { border-color: transparent !important; }
+html.dark [class*="border-[#E1BFB5]"] { border-color: transparent !important; }
+html.dark [class*="border-orange"]:not([class*="focus:border"]) { border-color: rgba(249,115,22,0.22) !important; } /* active stays warm, not white */
+html.dark [class*="border-[#C2410C]"]:not([class*="focus:border"]) { border-color: #f97316 !important; }
+
+/* Keep explicit dark timber borders for inputs/search (handled per-component), cards will be set to transparent via component dark:border-transparent */
+
+/* Dark text — stitch: #e9e1dd primary, #a78b7d muted, #f3ece7 headline, #e0c0b1 file, #ffb690 accent */
+html.dark [class*="text-[#1C1513]"] { color: #f3ece7 !important; }
+html.dark [class*="text-[#1C1512]"] { color: #e9e1dd !important; }
+html.dark [class*="text-[#2B211D]"] { color: #e0c0b1 !important; }
+html.dark [class*="text-[#2B211E]"] { color: #e0c0b1 !important; }
+html.dark [class*="text-[#706159]"] { color: #a78b7d !important; }
+html.dark [class*="text-[#8D7168]"] { color: #8d7168 !important; }
+html.dark [class*="text-[#786A64]"] { color: #a78b7d !important; }
+html.dark [class*="text-[#4A3E39]"] { color: #e0c0b1 !important; }
+html.dark [class*="text-stone-500"] { color: #a78b7d !important; }
+html.dark [class*="text-stone-900"] { color: #f3ece7 !important; }
+html.dark [class*="placeholder:text-[#9C8C84]"]::placeholder { color: #6e5e55 !important; }
+html.dark [class*="text-[#9B2F00]"] { color: #ffb690 !important; }
+html.dark [class*="text-[#7C2D12]"] { color: #ffb690 !important; }
+html.dark [class*="text-[#C2410C]"] { color: #f97316 !important; }
+
+/* Keep muted helpers readable */
+html.dark .text-stone-400 { color: #a78b7d !important; }
+html.dark [class*="bg-stone-100"] { background-color: #1a1715 !important; border-color: #352e29 !important; color: #e0c0b1 !important; }
+
+/* Dark typography — stitch uses Manrope for labels in dark */
+html.dark [class*="font-mono"] { font-family: Manrope, Inter, sans-serif !important; letter-spacing: 0.02em; }
+
+/* Dark shapes — stitch dark uses 1rem cards (vs 0.5rem light) */
+html.dark [class*="rounded-xl"] { border-radius: 1rem !important; }
+html.dark [class*="rounded-lg"] { border-radius: 0.75rem !important; }
+
+/* Dark elevation — warm umber (stitch) */
+html.dark [class*="rounded-xl"][class*="border"] {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 8px 28px rgba(12,10,9,0.45);
+}
+html.dark [class*="rounded-2xl"][class*="border"] {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 16px 32px rgba(10,8,7,0.55);
+}
+
+/* "What to learn" — dark mode only: highlighted = lighter bg + orange outline, others = darker */
+html.dark .concept-highlight {
+  background-color: #221e1b !important; /* lighter card — overrides bg-[#F7F3EE]/70 mapping */
+  border-color: #f97316 !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 8px 28px rgba(12,10,9,0.45), 0 0 0 1px rgba(249,115,22,0.15) !important;
+}
+html.dark .concept-muted {
+  background-color: #141211 !important; /* darker — recedes */
+  border-color: #2d2723 !important;
+}
+
+/* Topic/Explanation & Audio preview — never orange, even on focus (dark) */
+html.dark .no-orange-focus:focus {
+  border-color: #352e29 !important;
+  box-shadow: none !important;
+}
