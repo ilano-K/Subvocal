@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     # LLM
     llm_base_url: str 
     llm_api_key: str
+    llm_model: str = 'deepseek-v4-flash:free'
     
     # Uploads
     max_file_size_limit: int = 50 * 1024 * 1024 # 50 mb

@@ -6,7 +6,10 @@ class ValidationError(AppError):
 
 class LLMValidationFailed(AppError):
     """Raised when LLM output validation fails"""
-    
+
+class LLMConnectionError(AppError):
+    """Raised when LLM request fails"""
+
 class FileTooLarge(AppError):
     """Raised when a file exceeds max file size limit."""
     

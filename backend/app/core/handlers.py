@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from app.core.errors import (
     AppError,
     FileTooLarge,
+    LLMConnectionError,
     LLMValidationFailed,
     NotFoundError,
     ProcessingError,
@@ -14,6 +15,7 @@ from app.core.errors import (
 ERROR_STATUS_CODES: dict[type[AppError], int] = {
     ValidationError: status.HTTP_400_BAD_REQUEST,
     LLMValidationFailed: status.HTTP_422_UNPROCESSABLE_CONTENT,
+    LLMConnectionError: status.HTTP_502_BAD_GATEWAY,
     FileTooLarge: status.HTTP_413_CONTENT_TOO_LARGE,
     UnsupportedFileType: status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
     ProcessingError: status.HTTP_500_INTERNAL_SERVER_ERROR,
