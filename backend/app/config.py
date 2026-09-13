@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     # Application
     service_name: str = "Subvocal Backend"
     api_prefix: str = "/api/v1"
-    
+    allowed_document_extensions = {".pdf", ".docx", ".pptx"}
     debug: bool = True
     # CORS
     cors_allowed_origins: list[str] = [
@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     llm_api_key: str
     
     # Uploads
-    max_file_size_limit: int = 50
+    max_file_size_limit: int = 50 * 1024 * 1024 # 50 mb
     
     allowed_mime_types: set[str] = {
         "application/pdf",
@@ -31,8 +31,9 @@ class Settings(BaseSettings):
     
     # Storage
     storage_dir: Path = Path(".data/")
-    docling_cache_dir: Path = Path("./data/docling/")
+    docling_cache_dir: Path = Path(".data/docling/")
     session_dir: Path = Path(".data/sessions")
+    parse_cache_dir: Path = Path(".data/parse")
 
     model_config = SettingsConfigDict(
         env_file='.env',
