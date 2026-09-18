@@ -37,6 +37,9 @@ Thumbs.db
 *.sw?
 
 venv/
+__pycache__/
+.data/
+*.db
 
 # Local docs — keep out of repo (not committed)
 BACKEND.md
