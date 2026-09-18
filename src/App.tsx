@@ -39,7 +39,11 @@ export default function App() {
     <div className="min-h-screen bg-[#FBF9F5] dark:bg-[#141211] acoustic-grid">
       <TopNav view={view} onChangeView={setView} onToggleHud={() => setHudOpen(!hudOpen)} hudOpen={hudOpen} dark={dark} onToggleDark={() => setDark((v) => !v)} />
       <main className="pt-11">
-        {view === "workspace" ? <StudyWorkspace /> : <MyAudios onEdit={() => setView("workspace")} />}
+        {view === "workspace" ? (
+          <StudyWorkspace onSaved={() => setView("library")} />
+        ) : (
+          <MyAudios onEdit={() => setView("workspace")} />
+        )}
       </main>
 
       {hudOpen && <FloatingHUD onExpand={() => { setHudOpen(false); setView("workspace"); window.scrollTo({ top: 0, behavior: "smooth" }); }} />}
