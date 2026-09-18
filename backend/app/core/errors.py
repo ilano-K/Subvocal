@@ -21,3 +21,6 @@ class ProcessingError(AppError):
 
 class NotFoundError(AppError):
     """Raised when a requested source does not exist."""
+
+class CompileFailed(AppError):
+    """Raised when script compilation fails."""
