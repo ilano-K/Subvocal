@@ -14,8 +14,7 @@ class Concept(BaseModel):
         ...,
         description="Concise, speakable definition or explanation.",
     )
-
-
+    
 class ExtractConceptsRequest(BaseModel):
     document_id: str
 

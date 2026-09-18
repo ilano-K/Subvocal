@@ -1,14 +1,4 @@
 from pydantic import BaseModel, Field
-from typing import Literal
-
-
-Style = Literal[
-    "term-definition", "mnemonics", "active-recall",
-    "leitner", "socratic", "speed-sprint",
-]
-
-CREATIVE_STYLES = {"mnemonics", "active-recall", "socratic", "tricks"}
-TEMPLATE_STYLES = {"term-definition", "leitner", "speed-sprint"}
 
 
 class CompileConcept(BaseModel):
@@ -21,9 +11,8 @@ class CompileConcept(BaseModel):
 class CompileScriptRequest(BaseModel):
     deck_title: str = Field(alias="deckTitle")
     concepts: list[CompileConcept]
-    style: Style
-    pause_sec: float = Field(alias="pauseSec", ge=0.5, le=5.0)
-    voice_rate: float = Field(alias="voiceRate", default=1.0)
+    pause_sec: float = Field(default=2.5, alias="pauseSec")
+    voice_rate: float = Field(default=1.0, alias="voiceRate")
     transcript_override: str | None = Field(default=None, alias="transcriptOverride")
 
     model_config = {"populate_by_name": True}
@@ -34,14 +23,13 @@ class ScriptChunk(BaseModel):
     concept_id: str = Field(alias="conceptId")
     title: str
     text: str
-    reps: int
+    reps: int = 1
 
     model_config = {"populate_by_name": True}
 
 
 class CompileScriptResponse(BaseModel):
     deck_title: str = Field(alias="deckTitle")
-    style: Style
     pause_sec: float = Field(alias="pauseSec")
     voice_rate: float = Field(alias="voiceRate")
     estimated_sec: float = Field(alias="estimatedSec")
@@ -51,10 +39,12 @@ class CompileScriptResponse(BaseModel):
     model_config = {"populate_by_name": True}
 
 
-class CreativeLLMChunk(BaseModel):
+class PrimerLLMItem(BaseModel):
     concept_id: str
-    text: str
+    spoken_text: str = Field(
+        description="Spoken text in Primer format: Concept: {term}. {definition} Think of it like this: {simple_analogy}."
+    )
 
 
-class CreativeLLMResponse(BaseModel):
-    chunks: list[CreativeLLMChunk]
+class PrimerLLMResponse(BaseModel):
+    items: list[PrimerLLMItem]

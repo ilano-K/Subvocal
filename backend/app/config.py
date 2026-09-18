@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     # Application
     service_name: str = "Subvocal Backend"
     api_prefix: str = "/api/v1"
-    allowed_document_extensions = {".pdf", ".docx", ".pptx"}
+    allowed_document_extensions: set[str] = {".pdf", ".docx", ".pptx"}
     debug: bool = True
     # CORS
     cors_allowed_origins: list[str] = [
@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # LLM
     llm_base_url: str 
     llm_api_key: str
-    llm_model: str = 'deepseek-v4-flash:free'
+    llm_model: str
     
     # Uploads
     max_file_size_limit: int = 50 * 1024 * 1024 # 50 mb
@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     docling_cache_dir: Path = Path(".data/docling/")
     session_dir: Path = Path(".data/sessions")
     parse_cache_dir: Path = Path(".data/parse")
+    database_path: Path = Path(".data/subvocal.db")
 
     model_config = SettingsConfigDict(
         env_file='.env',

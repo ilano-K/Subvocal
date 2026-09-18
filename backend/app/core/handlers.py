@@ -29,7 +29,7 @@ async def app_error_handler(
     exc: AppError,
 ) -> JSONResponse:
     status_code = ERROR_STATUS_CODES.get(
-        exc,
+        type(exc),
         status.HTTP_500_INTERNAL_SERVER_ERROR
     )
     return JSONResponse(
