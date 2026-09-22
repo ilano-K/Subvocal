@@ -32,7 +32,6 @@ class Settings(BaseSettings):
     
     # Storage
     storage_dir: Path = Path(".data/")
-    docling_cache_dir: Path = Path(".data/docling/")
     session_dir: Path = Path(".data/sessions")
     parse_cache_dir: Path = Path(".data/parse")
     database_path: Path = Path(".data/subvocal.db")

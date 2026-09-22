@@ -18,7 +18,6 @@ logger = logging.getLogger("subvocal")
 async def lifespan(app: FastAPI):
     logger.info("Initializing Subvocal backend directories and database...")
     settings.storage_dir.mkdir(parents=True, exist_ok=True)
-    settings.docling_cache_dir.mkdir(parents=True, exist_ok=True)
     settings.session_dir.mkdir(parents=True, exist_ok=True)
     settings.parse_cache_dir.mkdir(parents=True, exist_ok=True)
     settings.database_path.parent.mkdir(parents=True, exist_ok=True)
