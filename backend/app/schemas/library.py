@@ -11,6 +11,7 @@ class StudyDeckCreate(BaseModel):
     voice_rate: float = Field(alias="voiceRate")
     estimated_sec: float = Field(alias="estimatedSec")
     transcript: str
+    style: Optional[str] = "primer"
     chunks: List[ScriptChunk]
     concepts: List[CompileConcept]
 
@@ -25,6 +26,7 @@ class StudyDeckResponse(BaseModel):
     voice_rate: float = Field(alias="voiceRate")
     estimated_sec: float = Field(alias="estimatedSec")
     transcript: str
+    style: Optional[str] = "primer"
     chunks: List[ScriptChunk]
     concepts: List[CompileConcept]
 
@@ -38,6 +40,7 @@ class StudyDeckUpdate(BaseModel):
     voice_rate: Optional[float] = Field(default=None, alias="voiceRate")
     estimated_sec: Optional[float] = Field(default=None, alias="estimatedSec")
     transcript: Optional[str] = None
+    style: Optional[str] = None
     chunks: Optional[list[ScriptChunk]] = None
     concepts: Optional[list[CompileConcept]] = None
 

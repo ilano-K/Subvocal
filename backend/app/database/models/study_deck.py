@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import JSON, DateTime, func
+from sqlalchemy import JSON, DateTime, String, func
 from app.database.db import Base
 from datetime import datetime
+from typing import Optional
 
 
 class StudyDeck(Base):
@@ -13,6 +14,7 @@ class StudyDeck(Base):
     voice_rate: Mapped[float] = mapped_column()
     estimated_sec: Mapped[float] = mapped_column()
     transcript: Mapped[str] = mapped_column()
+    style: Mapped[Optional[str]] = mapped_column(String, nullable=True, default="primer")
     chunks: Mapped[list[dict]] = mapped_column(JSON)
     concepts: Mapped[list[dict]] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(
