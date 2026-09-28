@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { Session, StudyStyle } from "../data/mockData";
 import {
   fetchStudyDecks,
@@ -6,37 +7,62 @@ import {
   updateStudyDeck,
   deleteStudyDeck,
   type StudyDeckRecord,
+  type StudyDeckCreatePayload,
 } from "../services/api";
+import { useSessionStore } from "./useSessionStore";
+import { useAudioQueueStore } from "./useAudioQueueStore";
+
+export type DeckData = StudyDeckCreatePayload;
+
+const UNDO_WINDOW_MS = 5000;
 
 function formatDurationLabel(sec: number): string {
   const min = Math.max(1, Math.round(sec / 60));
   return `${min} min`;
 }
 
-function deckRecordToSession(record: StudyDeckRecord): Session {
+function toSession(id: string, d: DeckData, isLocal: boolean): Session {
   return {
-    id: String(record.id),
-    title: record.deckTitle,
-    fileName: record.filename,
-    style: (record.style as StudyStyle) || "primer",
-    chunks: record.chunks.map((c) => ({
-      id: c.id,
-      conceptId: c.conceptId,
-      title: c.title,
-      text: c.text,
-      reps: c.reps,
-    })),
-    concepts: record.concepts.map((c) => ({
-      id: c.id,
-      term: c.term,
-      definition: c.definition,
-      reps: (c.reps as 1 | 2 | 3) || 1,
-    })),
-    durationLabel: formatDurationLabel(record.estimatedSec),
-    lastStudied: "Saved",
-    chunkCount: record.chunks.length,
+    id,
+    title: d.deckTitle,
+    fileName: d.filename,
+    style: (d.style as StudyStyle) || "primer",
+    chunks: d.chunks.map((c) => ({ id: c.id, conceptId: c.conceptId ?? "", title: c.title, text: c.text, reps: c.reps })),
+    concepts: d.concepts.map((c) => ({ id: c.id, term: c.term, definition: c.definition, reps: (c.reps as 1 | 2 | 3) || 1 })),
+    transcript: d.transcript,
+    pauseSec: d.pauseSec,
+    voiceRate: d.voiceRate,
+    estimatedSec: d.estimatedSec,
+    durationLabel: formatDurationLabel(d.estimatedSec),
+    lastStudied: isLocal ? "Not synced" : "Saved",
+    chunkCount: d.chunks.length,
+    isLocal: isLocal || undefined,
   };
 }
+
+const recordToSession = (r: StudyDeckRecord) => toSession(String(r.id), r, false);
+
+function sessionToDeckData(s: Session): DeckData {
+  return {
+    filename: s.fileName,
+    deckTitle: s.title,
+    pauseSec: s.pauseSec,
+    voiceRate: s.voiceRate,
+    estimatedSec: s.estimatedSec,
+    transcript: s.transcript,
+    style: s.style,
+    chunks: s.chunks,
+    concepts: s.concepts,
+  };
+}
+
+const serverId = (id: string | null | undefined) => (id && /^\d+$/.test(id) ? parseInt(id, 10) : null);
+
+// Decks whose deletion has been committed; autosave must not write them back.
+const deletedIds = new Set<string>();
+export const wasDeleted = (id: string) => deletedIds.has(id);
+
+let deleteTimer: number | null = null;
 
 type LibState = {
   sessions: Session[];
@@ -44,103 +70,138 @@ type LibState = {
   sortBy: "recent" | "duration" | "chunks";
   loading: boolean;
   error: string | null;
+  // Deck removed from view but not yet deleted, so it can still be restored.
+  pendingDelete: { session: Session; index: number } | null;
   setFilter: (v: string) => void;
   setSort: (v: LibState["sortBy"]) => void;
   loadDecks: () => Promise<void>;
-  remove: (id: string) => Promise<void>;
-  add: (s: Session) => void;
-  saveDeck: (
-    deckData: {
-      filename: string;
-      deckTitle: string;
-      pauseSec: number;
-      voiceRate: number;
-      estimatedSec: number;
-      transcript: string;
-      style?: string;
-      chunks: { id: string; conceptId: string; title: string; text: string; reps: number }[];
-      concepts: { id: string; term: string; definition: string; reps: number }[];
-    },
-    existingDeckId?: string | number | null
-  ) => Promise<Session>;
-  upsert: (s: Session) => void;
+  remove: (id: string) => void;
+  undoRemove: () => void;
+  /** Saves to the server, falling back to a device-only copy when it's unreachable. */
+  saveDeck: (deckData: DeckData, existingDeckId?: string | null) => Promise<Session>;
 };
 
-export const useLibraryStore = create<LibState>((set) => ({
-  sessions: [],
-  filter: "",
-  sortBy: "recent",
-  loading: false,
-  error: null,
-  setFilter: (filter) => set({ filter }),
-  setSort: (sortBy) => set({ sortBy }),
+export const useLibraryStore = create<LibState>()(
+  persist(
+    (set, get) => {
+      const commitDelete = async () => {
+        if (deleteTimer) window.clearTimeout(deleteTimer);
+        deleteTimer = null;
+        const pending = get().pendingDelete;
+        if (!pending) return;
+        const { session } = pending;
+        set({ pendingDelete: null });
+        deletedIds.add(session.id);
 
-  loadDecks: async () => {
-    set({ loading: true, error: null });
-    try {
-      const records = await fetchStudyDecks();
-      const backendSessions = records.map(deckRecordToSession);
-      set({ sessions: backendSessions, loading: false });
-    } catch (err: any) {
-      console.warn("Could not load decks from backend:", err.message);
-      set({ loading: false });
-    }
-  },
+        const editing = useSessionStore.getState();
+        if (editing.activeDeckId === session.id) editing.resetSession();
+        const queue = useAudioQueueStore.getState();
+        if (queue.sourceKey?.startsWith(`${session.id}:`)) queue.clearQueue();
 
-  remove: async (id: string) => {
-    set((s) => ({ sessions: s.sessions.filter((x) => x.id !== id) }));
-    const numericId = parseInt(id, 10);
-    if (!isNaN(numericId)) {
-      try {
-        await deleteStudyDeck(numericId);
-      } catch (err: any) {
-        console.warn("Could not delete deck on backend:", err.message);
-      }
-    }
-  },
-
-  add: (sess) => set((s) => ({ sessions: [sess, ...s.sessions] })),
-
-  saveDeck: async (deckData, existingDeckId) => {
-    const numericId = existingDeckId ? parseInt(String(existingDeckId), 10) : NaN;
-    try {
-      let saved: StudyDeckRecord;
-      if (!isNaN(numericId)) {
-        saved = await updateStudyDeck(numericId, deckData);
-      } else {
-        saved = await createStudyDeck(deckData);
-      }
-      const session = deckRecordToSession(saved);
-      set((s) => ({
-        sessions: [session, ...s.sessions.filter((x) => x.id !== session.id)],
-      }));
-      return session;
-    } catch (err: any) {
-      console.warn("Backend save/update failed, saving to local store:", err.message);
-      const localId = existingDeckId ? String(existingDeckId) : `local-${Date.now()}`;
-      const localSession: Session = {
-        id: localId,
-        title: deckData.deckTitle,
-        fileName: deckData.filename,
-        style: (deckData.style as StudyStyle) || "primer",
-        chunks: deckData.chunks,
-        concepts: deckData.concepts.map((c) => ({
-          ...c,
-          reps: (c.reps as 1 | 2 | 3) || 1,
-        })),
-        durationLabel: formatDurationLabel(deckData.estimatedSec),
-        lastStudied: "Just now",
-        chunkCount: deckData.chunks.length,
+        const numericId = serverId(session.id);
+        if (numericId === null) return;
+        try {
+          await deleteStudyDeck(numericId);
+        } catch (err: any) {
+          deletedIds.delete(session.id);
+          set((s) => ({
+            sessions: [session, ...s.sessions],
+            error: `Couldn't delete “${session.title}”: ${err.message}`,
+          }));
+        }
       };
-      set((s) => ({
-        sessions: [localSession, ...s.sessions.filter((x) => x.id !== localId)],
-      }));
-      return localSession;
-    }
-  },
 
-  upsert: (sess) =>
-    set((s) => ({
-      sessions: [sess, ...s.sessions.filter((x) => x.id !== sess.id)],
-    })),
-}));
+      return {
+        sessions: [],
+        filter: "",
+        sortBy: "recent",
+        loading: false,
+        error: null,
+        pendingDelete: null,
+        setFilter: (filter) => set({ filter }),
+        setSort: (sortBy) => set({ sortBy }),
+
+        loadDecks: async () => {
+          set({ loading: true });
+          let records: StudyDeckRecord[];
+          try {
+            records = await fetchStudyDecks();
+          } catch (err: any) {
+            set({
+              loading: false,
+              error: `Couldn't reach the server (${err.message}). Showing decks saved on this device.`,
+            });
+            return;
+          }
+          const local = get().sessions.filter((s) => s.isLocal);
+          // A device-only copy of a server deck holds newer edits than the server version.
+          const hidden = new Set([...local.map((l) => l.id), ...deletedIds]);
+          const pendingId = get().pendingDelete?.session.id;
+          if (pendingId) hidden.add(pendingId);
+          const server = records.map(recordToSession).filter((s) => !hidden.has(s.id));
+          set({ sessions: [...local, ...server], loading: false, error: null });
+
+          // Server is reachable again: upload decks that were only saved on this device.
+          for (const l of local) {
+            try {
+              const id = serverId(l.id);
+              const data = sessionToDeckData(l);
+              const saved = recordToSession(id !== null ? await updateStudyDeck(id, data) : await createStudyDeck(data));
+              set((s) => ({ sessions: s.sessions.map((x) => (x.id === l.id ? saved : x)) }));
+              const editing = useSessionStore.getState();
+              if (editing.activeDeckId === l.id) {
+                editing.setActiveDeckId(saved.id);
+                editing.setSaveStatus("saved");
+              }
+            } catch {
+              break;
+            }
+          }
+        },
+
+        remove: (id) => {
+          void commitDelete();
+          const index = get().sessions.findIndex((s) => s.id === id);
+          if (index < 0) return;
+          const session = get().sessions[index];
+          set((s) => ({ sessions: s.sessions.filter((x) => x.id !== id), pendingDelete: { session, index } }));
+          deleteTimer = window.setTimeout(() => void commitDelete(), UNDO_WINDOW_MS);
+        },
+
+        undoRemove: () => {
+          if (deleteTimer) window.clearTimeout(deleteTimer);
+          deleteTimer = null;
+          const pending = get().pendingDelete;
+          if (!pending) return;
+          set((s) => {
+            const sessions = [...s.sessions];
+            sessions.splice(Math.min(pending.index, sessions.length), 0, pending.session);
+            return { sessions, pendingDelete: null };
+          });
+        },
+
+        saveDeck: async (deckData, existingDeckId) => {
+          const numericId = serverId(existingDeckId);
+          let session: Session;
+          try {
+            const saved = numericId !== null ? await updateStudyDeck(numericId, deckData) : await createStudyDeck(deckData);
+            session = recordToSession(saved);
+          } catch (err: any) {
+            console.warn("Backend save failed, keeping a device-only copy:", err.message);
+            session = toSession(existingDeckId ?? `local-${Date.now()}`, deckData, true);
+          }
+          // Replaces the previous entry, including a device-only copy that just got its server id.
+          set((s) => ({
+            sessions: [session, ...s.sessions.filter((x) => x.id !== session.id && x.id !== existingDeckId)],
+          }));
+          return session;
+        },
+      };
+    },
+    {
+      name: "subvocal-local-decks",
+      // Only device-only decks live in browser storage; everything else comes from the server.
+      partialize: (s) => ({ sessions: s.sessions.filter((x) => x.isLocal) }),
+    }
+  )
+);
