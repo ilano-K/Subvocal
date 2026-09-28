@@ -5,7 +5,7 @@ import tempfile
 import shutil
 
 from app.schemas.documents import DocumentParseResponse
-from app.services import documents_service
+from app.services import document_service
 from app.config import settings
 from app.core.errors import ProcessingError, UnsupportedFileType, FileTooLarge
 
@@ -45,8 +45,8 @@ async def parse_document(
             logger.info("Stored temporary upload at: %s", tmp_path)
             
             # 4. Pass the temporary path
-            result = documents_service.parse_document(tmp_path)
-            logger.info("Document parsed successfully. doc_id=%s, pages=%d, text_len=%d",
+            result = document_service.parse_document(tmp_path)
+            logger.info("Document parsed successfully. doc_id=%s, pages=%s, text_len=%d",
                         result.document_id, result.page_count, len(result.extracted_text))
             
     except ProcessingError as e:
