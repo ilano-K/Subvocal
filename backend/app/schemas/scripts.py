@@ -14,17 +14,17 @@ class CompileScriptRequest(BaseModel):
     pause_sec: float = Field(default=2.5, alias="pauseSec")
     voice_rate: float = Field(default=1.0, alias="voiceRate")
     transcript_override: str | None = Field(default=None, alias="transcriptOverride")
+    document_id: str | None = Field(default=None, alias="documentId")
+    document_epitome: str | None = Field(default=None, alias="documentEpitome")
 
     model_config = {"populate_by_name": True}
 
 
 class ScriptChunk(BaseModel):
     id: str
-    concept_id: str = Field(alias="conceptId")
     title: str
     text: str
     reps: int = 1
-
     model_config = {"populate_by_name": True}
 
 
@@ -48,3 +48,11 @@ class PrimerLLMItem(BaseModel):
 
 class PrimerLLMResponse(BaseModel):
     items: list[PrimerLLMItem]
+
+
+# LLM script generation
+class WriteScriptLLMResponse(BaseModel):
+    script: str 
+    
+class OptimizeScriptLLMResponse(BaseModel):
+    optimized_script: str
