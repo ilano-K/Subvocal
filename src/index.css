@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -40,14 +40,16 @@ html.dark .acoustic-grid {
 .maple-glow { box-shadow: 0 4px 20px -2px rgba(194,65,12,0.25), 0 2px 6px -1px rgba(217,119,6,0.2); }
 html.dark .maple-glow { box-shadow: 0 4px 20px -2px rgba(249,115,22,0.28), 0 12px 28px rgba(12,10,9,0.6); }
 
-/* Dark inputs — stitch: field #141211 + border #352e29 / focus #f97316 + halo rgba(249,115,22,0.2) */
-html.dark input, html.dark textarea, html.dark select {
+/* Dark inputs — stitch: field #141211 + border #352e29 / focus #f97316 + halo rgba(249,115,22,0.2)
+   Wrapped in :where() so these are defaults only: an input's own utility classes (e.g. the
+   transparent search field inside its pill) take precedence. */
+:where(html.dark) :where(input, textarea, select) {
   background-color: #141211;
   border-color: #352e29;
   color: #e9e1dd;
 }
-html.dark input::placeholder, html.dark textarea::placeholder { color: #6e5e55; }
-html.dark input:focus, html.dark textarea:focus, html.dark select:focus {
+:where(html.dark) :where(input, textarea)::placeholder { color: #6e5e55; }
+:where(html.dark) :where(input, textarea, select):focus {
   border-color: #f97316;
   box-shadow: 0 0 0 3px rgba(249,115,22,0.2);
 }
@@ -103,9 +105,6 @@ html.dark [class*="text-[#C2410C]"] { color: #f97316 !important; }
 /* Keep muted helpers readable */
 html.dark .text-stone-400 { color: #a78b7d !important; }
 html.dark [class*="bg-stone-100"] { background-color: #1a1715 !important; border-color: #352e29 !important; color: #e0c0b1 !important; }
-
-/* Dark typography — stitch uses Manrope for labels in dark */
-html.dark [class*="font-mono"] { font-family: Manrope, Inter, sans-serif !important; letter-spacing: 0.02em; }
 
 /* Dark shapes — stitch dark uses 1rem cards (vs 0.5rem light) */
 html.dark [class*="rounded-xl"] { border-radius: 1rem !important; }
