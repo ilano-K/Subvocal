@@ -2,7 +2,6 @@ from fastapi import APIRouter
 
 from app.services import concepts_service
 from app.schemas.concepts import ExtractConceptsRequest, ExtractConceptResponse
-from app.core.errors import NotFoundError
 
 router = APIRouter(prefix="/concepts")
 

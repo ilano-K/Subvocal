@@ -43,21 +43,81 @@ export async function parseDocument(file: File): Promise<DocumentParseResponse> 
 
 // ---------------- Concept Extraction ----------------
 
-export type ExtractedConcept = {
-  id: string;
-  term: string;
+export type FactualSchema = {
+  shape: "factual";
+  canonical_term: string;
   definition: string;
+  synonyms: string[];
+};
+
+export type ConceptualSchema = {
+  shape: "conceptual";
+  parent_concept: string;
+  categorical_taxonomy: string;
+  child_definitions: string[];
+};
+
+export type ProceduralSchema = {
+  shape: "procedural";
+  goal_state: string;
+  ordered_steps: string[];
+  decision_branches: string[];
+};
+
+export type TheoreticalSchema = {
+  shape: "theoretical";
+  principle_statement: string;
+  cause_effect_variables: string[];
+  boundary_conditions: string;
+};
+
+export type KnowledgeSchema =
+  | FactualSchema
+  | ConceptualSchema
+  | ProceduralSchema
+  | TheoreticalSchema;
+
+export type LearningModule = {
+  id: string;
+  knowledge_schema: KnowledgeSchema;
+  prepended_context: string;
+  locked_keywords: string[];
+  prerequisite_ids: string[];
 };
 
 export type ExtractConceptsResponse = {
   document_id: string;
-  concepts: ExtractedConcept[];
+  document_epitome: string;
+  modules: LearningModule[];
   usage: {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
   };
 };
+
+export function flattenModule(m: LearningModule): { term: string; definition: string } {
+  const s = m.knowledge_schema;
+  switch (s.shape) {
+    case "factual":
+      return { term: s.canonical_term, definition: s.definition };
+    case "conceptual":
+      return {
+        term: s.parent_concept,
+        definition: `${s.categorical_taxonomy}: ${s.child_definitions.join("; ")}`,
+      };
+    case "procedural":
+      return {
+        term: s.goal_state,
+        definition: s.ordered_steps.join(" → "),
+      };
+    case "theoretical":
+      return {
+        term: s.principle_statement,
+        definition: `Variables: ${s.cause_effect_variables.join(", ")}. Boundary: ${s.boundary_conditions}`,
+      };
+  }
+}
 
 export async function extractConcepts(documentId: string): Promise<ExtractConceptsResponse> {
   const res = await fetch(`${API_BASE}/concepts/extract`, {
@@ -84,6 +144,8 @@ export type CompileScriptPayload = {
   pauseSec: number;
   voiceRate: number;
   transcriptOverride?: string;
+  documentId?: string;
+  documentEpitome?: string;
 };
 
 export type CompileScriptResponse = {
