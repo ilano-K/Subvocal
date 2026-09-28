@@ -1,3 +1,11 @@
+/** Narration speeds offered in the workspace and the player. */
+export const NARRATION_SPEEDS = [0.5, 0.75, 0.9, 1, 1.15, 1.25, 1.5, 1.75, 2] as const;
+
+/** Snaps any stored rate to the nearest offered speed. */
+export function nearestSpeed(rate: number): number {
+  return NARRATION_SPEEDS.reduce((best, s) => (Math.abs(s - rate) < Math.abs(best - rate) ? s : best), 1);
+}
+
 let audioCtx: AudioContext | null = null;
 
 function getAudioContext(): AudioContext {
@@ -81,27 +89,31 @@ export function playBenchmarkEarcon(): Promise<void> {
   });
 }
 
+/** Strips literal pause tokens (e.g. [pause 2.5s]) so the synthesizer never speaks them aloud. */
+export function cleanSpokenText(text: string): string {
+  return text.replace(/\[pause(?:\s+[0-9.]*s?)?\]/gi, "").trim();
+}
+
+/**
+ * Speaks `text` after cancelling anything in progress. `onBoundary` receives the character
+ * index (within the cleaned text) of each word as it starts, where the voice supports it.
+ */
 export function speakText(
   text: string,
   rate = 1,
   onEnd?: () => void,
-  onBoundary?: (snippet: string) => void
+  onBoundary?: (charIndex: number) => void
 ): void {
   if (!("speechSynthesis" in window)) {
     onEnd?.();
     return;
   }
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
+  stopSpeech();
+  const u = new SpeechSynthesisUtterance(cleanSpokenText(text));
   u.rate = rate;
   u.onend = () => onEnd?.();
-  // boundary event provides word-level granularity where supported
-  // @ts-ignore
-  u.onboundary = (e: SpeechSynthesisEvent) => {
-    if (e.name === "word") {
-      const snippet = text.slice(e.charIndex ?? 0, (e.charIndex ?? 0) + 40);
-      onBoundary?.(snippet);
-    }
+  u.onboundary = (e) => {
+    if (e.name === "word") onBoundary?.(e.charIndex ?? 0);
   };
   window.speechSynthesis.speak(u);
 }
@@ -110,7 +122,10 @@ export function speakText(
 export const speakChunk = speakText;
 
 export function stopSpeech(): void {
-  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  if (!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  // Chromium keeps the synth paused across cancel(), which would silently hold the next utterance.
+  if (window.speechSynthesis.paused) window.speechSynthesis.resume();
 }
 
 export function pauseSpeech(): void {

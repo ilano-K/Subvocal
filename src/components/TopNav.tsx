@@ -3,11 +3,14 @@ type Props = {
   onChangeView: (v: "workspace" | "library") => void;
   onToggleHud: () => void;
   hudOpen: boolean;
+  // Something is loaded in the player (the toggle does nothing otherwise).
+  hasQueue: boolean;
+  isPlaying: boolean;
   dark: boolean;
   onToggleDark: () => void;
 };
 
-export default function TopNav({ view, onChangeView, onToggleHud, hudOpen, dark, onToggleDark }: Props) {
+export default function TopNav({ view, onChangeView, onToggleHud, hudOpen, hasQueue, isPlaying, dark, onToggleDark }: Props) {
   return (
     <header className="fixed top-0 left-0 w-full z-40 bg-[#FBF9F5]/90 dark:bg-[#181513]/90 backdrop-blur-md border-b border-[#E6DDD2] dark:border-[#2d2723] shadow-sm">
       <div className="h-11 w-full px-5 flex items-center justify-between">
@@ -46,12 +49,14 @@ export default function TopNav({ view, onChangeView, onToggleHud, hudOpen, dark,
           </button>
           <button
             onClick={onToggleHud}
-            className={`inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border transition-all shadow-xs ${hudOpen ? "bg-[#C2410C] dark:bg-[#f97316] dark:text-[#161311] text-white border-[#C2410C] dark:border-[#f97316]" : "bg-white dark:bg-[#1e1b19] border-[#E2D8CC] dark:border-[#352e29] hover:border-[#EA580C]/50 text-[#2B211E] dark:text-[#e0c0b1]"}`}
-            title="Toggle floating player"
+            disabled={!hasQueue}
+            aria-pressed={hudOpen}
+            className={`inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border transition-all shadow-xs disabled:opacity-50 disabled:cursor-not-allowed ${hudOpen ? "bg-[#C2410C] dark:bg-[#f97316] dark:text-[#161311] text-white border-[#C2410C] dark:border-[#f97316]" : "bg-white dark:bg-[#1e1b19] border-[#E2D8CC] dark:border-[#352e29] hover:border-[#EA580C]/50 text-[#2B211E] dark:text-[#e0c0b1]"}`}
+            title={!hasQueue ? "Nothing to play yet — start listening to an audio first" : hudOpen ? "Hide player" : "Show player"}
           >
             <span className="material-symbols-outlined text-[14px]" style={{ color: hudOpen ? "white" : "#C2410C" }}>graphic_eq</span>
             <span className="font-mono text-[10px] font-semibold uppercase tracking-wider">Player</span>
-            {hudOpen && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse ml-1" />}
+            {isPlaying && <span className={`w-1.5 h-1.5 rounded-full animate-pulse ml-1 ${hudOpen ? "bg-white" : "bg-[#EA580C]"}`} />}
           </button>
         </div>
       </div>
