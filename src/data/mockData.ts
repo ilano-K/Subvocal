@@ -22,9 +22,15 @@ export type Session = {
   style?: StudyStyle;
   chunks: Chunk[];
   concepts: Concept[];
+  transcript: string;
+  pauseSec: number;
+  voiceRate: number;
+  estimatedSec: number;
   durationLabel: string;
   lastStudied: string;
   chunkCount: number;
+  // Saved only on this device because the server was unreachable.
+  isLocal?: boolean;
 };
 
 export const styleLabels: Record<StudyStyle, string> = {
