@@ -11,6 +11,7 @@ import { usePlaybackEngine } from "./hooks/usePlaybackEngine";
 import { usePlayerShortcuts } from "./hooks/usePlayerShortcuts";
 import { useTtsStatus } from "./hooks/useTtsStatus";
 import { useTtsTriggers } from "./hooks/useTtsTriggers";
+import { useThemeStore } from "./stores/useThemeStore";
 
 export default function App() {
   // HUD can also be opened standalone via ?hud=1 for Tauri second window simulation
@@ -34,7 +35,10 @@ function MainWindow() {
   const isPlaying = useAudioQueueStore((s) => s.isPlaying);
   const setHudOpen = useAudioQueueStore((s) => s.setHudOpen);
   const resetSession = useSessionStore((s) => s.resetSession);
-  const [dark, setDark] = useState(false);
+  const themeMode = useThemeStore((s) => s.mode);
+  const setThemeMode = useThemeStore((s) => s.setMode);
+  const [systemDark, setSystemDark] = useState(() => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false);
+  const dark = themeMode === "dark" || (themeMode === "system" && systemDark);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   usePlaybackEngine();
@@ -43,17 +47,17 @@ function MainWindow() {
   useTtsTriggers();
   useEffect(() => startAutosave(), []);
 
+  // Follow the operating system while the theme is set to "System".
   useEffect(() => {
-    const saved = localStorage.getItem("subvocal-dark");
-    // Default to light — only go dark if the user explicitly saved dark.
-    // (Previously we respected prefers-color-scheme, which made light mode look dark on dark OS)
-    const init = saved === "1";
-    setDark(init);
+    const query = window.matchMedia?.("(prefers-color-scheme: dark)");
+    if (!query) return;
+    const onChange = () => setSystemDark(query.matches);
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
   }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
-    localStorage.setItem("subvocal-dark", dark ? "1" : "0");
   }, [dark]);
 
   const playerVisible = hudOpen && hasQueue;
@@ -68,7 +72,7 @@ function MainWindow() {
         hasQueue={hasQueue}
         isPlaying={isPlaying}
         dark={dark}
-        onToggleDark={() => setDark((v) => !v)}
+        onToggleDark={() => setThemeMode(dark ? "light" : "dark")}
         onOpenSettings={() => setSettingsOpen(true)}
       />
       {/* Bottom padding keeps the floating player from covering the page's last actions. */}

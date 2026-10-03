@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { ttsAudioUrl } from "../services/api";
 import Modal from "./Modal";
+import { useThemeStore } from "../stores/useThemeStore";
+import type { ThemeMode } from "../stores/useThemeStore";
 import { useAudioQueueStore } from "../stores/useAudioQueueStore";
 import { useTtsStore } from "../stores/useTtsStore";
 import { formatBytes, formatEta, narratorView } from "../utils/tts";
@@ -22,6 +24,8 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
   const expectingLoad = useTtsStore((s) => s.isExpectingLoad());
   const store = useTtsStore.getState();
 
+  const themeMode = useThemeStore((s) => s.mode);
+  const setThemeMode = useThemeStore((s) => s.setMode);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [alsoDeleteAudio, setAlsoDeleteAudio] = useState(false);
   // True while a preview clip is being prepared. The player for it is separate from the main playback engine.
@@ -252,6 +256,35 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal title="Settings" onClose={onClose}>
+        <section className="space-y-3">
+          <h3 className="font-mono text-[10px] uppercase tracking-wider text-[#6E5F57] dark:text-[#a78b7d]">Appearance</h3>
+          <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-2">
+            {(
+              [
+                { mode: "light", label: "Light", icon: "light_mode" },
+                { mode: "dark", label: "Dark", icon: "dark_mode" },
+                { mode: "system", label: "System", icon: "contrast" },
+              ] as { mode: ThemeMode; label: string; icon: string }[]
+            ).map((o) => (
+              <button
+                key={o.mode}
+                role="radio"
+                aria-checked={themeMode === o.mode}
+                onClick={() => setThemeMode(o.mode)}
+                className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-md border font-mono text-[11px] transition ${
+                  themeMode === o.mode
+                    ? "bg-[#FFECE7] dark:bg-[#341d13] border-[#C2410C]/50 text-[#9B2F00] dark:text-[#ffb690] font-semibold"
+                    : "bg-white dark:bg-[#1e1b19] border-[#E2D8CC] dark:border-[#352e29] text-[#6E5F57] dark:text-[#a78b7d] hover:border-[#EA580C]/50"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[15px]">{o.icon}</span>
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-[#6E5F57] dark:text-[#a78b7d]">Remembered the next time you open Subvocal.</p>
+        </section>
+
         <section className="space-y-3">
           <h3 className="font-mono text-[10px] uppercase tracking-wider text-[#6E5F57] dark:text-[#a78b7d]">Narrator</h3>
           {renderBody()}
