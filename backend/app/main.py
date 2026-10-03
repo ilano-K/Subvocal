@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.core.migrate import migrate_legacy_data
 from app.core.logger import setup_logging
 from app.routers import api_router
 from app.core.errors import AppError
@@ -22,6 +23,7 @@ logger = logging.getLogger("subvocal")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Initializing Subvocal backend directories and database...")
+    migrate_legacy_data()
     settings.storage_dir.mkdir(parents=True, exist_ok=True)
     settings.session_dir.mkdir(parents=True, exist_ok=True)
     settings.parse_cache_dir.mkdir(parents=True, exist_ok=True)
