@@ -5,6 +5,7 @@ from app.routers.concepts import router as concepts_router
 from app.routers.scripts import router as scripts_router
 from app.routers.library import router as library_router
 from app.routers.tts import router as tts_router
+from app.routers.llm import router as llm_router
 from app.config import settings
 
 api_router = APIRouter(prefix=settings.api_prefix)
@@ -15,3 +16,4 @@ api_router.include_router(concepts_router)
 api_router.include_router(scripts_router)
 api_router.include_router(library_router)
 api_router.include_router(tts_router)
+api_router.include_router(llm_router)

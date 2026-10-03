@@ -1,10 +1,9 @@
 import logging
-from openai import APIConnectionError, APIError
 from pydantic import ValidationError
 
 from app.services import parse_cache
 from app.core.errors import NotFoundError, LLMValidationFailed, LLMConnectionError
-from app.services.llm_service import client as llm_client
+from app.services import llm_service
 from app.config import settings
 from app.schemas.concepts import ExtractConceptResponse, ExtractConceptLLMResponse, LLMUsage
 from app.prompts.concepts import SYSTEM_PROMPT
@@ -21,7 +20,7 @@ async def extract_concepts_service(document_id: str):
         raise NotFoundError()
     
     source_text = data["extracted_text"]
-    logger.info("Found cached text (%d chars). Dispatching to LLM (%s)...", len(source_text), settings.llm_model)
+    logger.info("Found cached text (%d chars). Dispatching to LLM (%s)...", len(source_text), llm_service.label())
 
     # 2. Call llm service for concept extraction
     document_epitome, modules, usage = await _extract_concepts_with_llm(source_text)
@@ -42,7 +41,7 @@ async def extract_concepts_service(document_id: str):
     )
 
 async def _extract_concepts_with_llm(text: str):
-    logger.info("Sending concept extraction prompt to model '%s'...", settings.llm_model)
+    logger.info("Sending concept extraction prompt to model '%s'...", llm_service.label())
     messages = [
         {
             "role": "system",
@@ -56,15 +55,14 @@ async def _extract_concepts_with_llm(text: str):
 
     raw_content = ""
     try:
-        completion = await llm_client.chat.completions.create(
-            model=settings.llm_model,
-            messages=messages,
-            reasoning_effort="none",  # disable for faster response
-            response_format={"type": "json_object"},
+        completion = await llm_service.complete(
+            messages,
             max_tokens=32000,  # explicit budget; the provider default can truncate the JSON
+            json_mode=True,
+            default_extra={"reasoning_effort": "none"},  # only the .env model gets this: faster response
         )
 
-        raw_content = completion.choices[0].message.content or ""
+        raw_content = completion.text
         logger.info("=== LLM CONCEPT EXTRACTION RAW OUTPUT ===")
         logger.info("\n%s", raw_content)
         logger.info("=========================================")
@@ -72,18 +70,14 @@ async def _extract_concepts_with_llm(text: str):
         result = ExtractConceptLLMResponse.model_validate_json(raw_content)
         
         usage = LLMUsage(
-            prompt_tokens=completion.usage.prompt_tokens if completion.usage else 0,
-            completion_tokens=completion.usage.completion_tokens if completion.usage else 0,
-            total_tokens=completion.usage.total_tokens if completion.usage else 0,
+            prompt_tokens=completion.prompt_tokens,
+            completion_tokens=completion.completion_tokens,
+            total_tokens=completion.total_tokens,
         )
         return result.document_epitome, result.modules, usage
 
-    except APIConnectionError as e:
-        logger.exception("Failed to connect to LLM provider at: %s", settings.llm_base_url)
-        raise LLMConnectionError() from e
-    except APIError as e:
-        logger.exception("LLM provider returned an API error: %s", e)
-        raise LLMConnectionError() from e
+    except LLMConnectionError:
+        raise
     except (ValidationError, Exception) as e:
         logger.exception("Pydantic validation failed on LLM response schema. Raw content was: %s", raw_content)
         raise LLMValidationFailed() from e

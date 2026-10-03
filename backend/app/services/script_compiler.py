@@ -1,4 +1,4 @@
-from app.services.llm_service import client as llm_client
+from app.services import llm_service
 from app.config import settings
 from app.prompts.script_writing import SCRIPT_WRITING_PROMPT, SCRIPT_OPTIMIZATION_PROMPT
 from app.schemas.scripts import (
@@ -6,7 +6,6 @@ from app.schemas.scripts import (
     CompileScriptRequest, CompileScriptResponse
 )
 
-from openai import APIConnectionError, APIError
 from app.core.errors import LLMConnectionError, LLMValidationFailed
 from app.services import parse_cache
 
@@ -136,22 +135,19 @@ async def _generate_optimized_script(script: str) -> str:
 
 async def _call_llm_text(system_prompt: str, user_content: str) -> str:
     try:
-        completion = await llm_client.chat.completions.create(
-            model=settings.llm_model,
-            messages=[
+        result = await llm_service.complete(
+            [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_content}
+                {"role": "user", "content": user_content},
             ],
             temperature=0.2,
             max_tokens=LLM_MAX_TOKENS,
         )
-        finish_reason = completion.choices[0].finish_reason
-        if finish_reason != "stop":
-            logger.warning("Script LLM call ended with finish_reason=%s; output may be truncated", finish_reason)
-        return (completion.choices[0].message.content or "").strip()
-    except (APIConnectionError, APIError) as e:
-        logger.exception("LLM API error during script text generation (%s)", e)
-        raise LLMConnectionError() from e
+        if result.finish_reason != "stop":
+            logger.warning("Script LLM call ended with finish_reason=%s; output may be truncated", result.finish_reason)
+        return result.text
+    except LLMConnectionError:
+        raise
     except Exception as e:
         logger.exception("Unexpected error during script text generation: %s", e)
         raise LLMValidationFailed() from e

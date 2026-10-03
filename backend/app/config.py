@@ -15,9 +15,11 @@ class Settings(BaseSettings):
     ]
     
     # LLM
-    llm_base_url: str 
-    llm_api_key: str
-    llm_model: str
+    # Optional fallback model, used when no provider is chosen in Settings
+    llm_base_url: str = ""
+    llm_api_key: str = ""
+    llm_model: str = ""
+    llm_providers_path: Path = Path(".data/llm_providers.json")
     
     # Uploads
     max_file_size_limit: int = 50 * 1024 * 1024 # 50 mb
