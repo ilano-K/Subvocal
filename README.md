@@ -205,6 +205,8 @@ The first build compiles Tauri from source and takes around 7 minutes or more; l
 
 **The backend is bundled.** The installer includes the Python backend; the app starts it when it opens and stops it when it closes, so nobody needs Python. The installer is large (about 200 MB) because it contains the narrator's engine; the voice itself is still downloaded from Settings. If something already answers on port 8000 (for example a backend you started yourself), the app uses that one instead. Development builds (`npm run tauri dev`) never start the bundled backend.
 
+**Releasing a new version:** `npm run version:set -- 0.2.0` updates the version in every place it appears (frontend, desktop app, backend). Then rebuild and attach the installer to a GitHub Release tagged `v0.2.0`.
+
 To rebuild the bundled backend before `npm run tauri build`, in an environment with `backend/requirements.txt` and `pyinstaller` installed:
 
 ```bash

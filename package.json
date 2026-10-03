@@ -1,7 +1,7 @@
 {
   "name": "subvocal-app",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "tauri": "tauri",
     "preview": "vite preview",
-    "backend:build": "cd backend && pyinstaller subvocal-backend.spec --noconfirm --distpath ../backend-dist --workpath build"
+    "backend:build": "cd backend && pyinstaller subvocal-backend.spec --noconfirm --distpath ../backend-dist --workpath build",
+    "version:set": "node scripts/bump-version.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.12.1",
