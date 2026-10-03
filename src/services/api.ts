@@ -329,3 +329,41 @@ export type TtsDeckCoverage = { id: string; total: number; ready: number };
 /** How much of each deck is already rendered. Read-only: nothing gets queued. */
 export const ttsCoverage = (decks: { id: string; texts: string[] }[]) =>
   request<TtsDeckCoverage[]>("/tts/coverage", json("POST", { decks }));
+
+// ---------------- AI providers & models ----------------
+
+export type LlmKind = "openai" | "gemini" | "anthropic" | "custom";
+
+export type LlmProvider = {
+  id: string;
+  kind: LlmKind;
+  name: string;
+  baseUrl: string;
+  models: string[];
+  hasKey: boolean; // the key itself is never sent back
+  keyHint: string; // its last four characters
+};
+
+export type LlmActive = { providerId: string; model: string };
+
+export type LlmSettings = {
+  providers: LlmProvider[];
+  active: LlmActive | null;
+  defaultModel: string | null; // the model set on the server, used when none is chosen
+};
+
+export type LlmTestResult = { ok: boolean; message: string; latencyMs: number };
+
+export const llmSettings = () => request<LlmSettings>("/llm/providers");
+export const llmAddProvider = (body: { kind: LlmKind; name?: string; baseUrl?: string; apiKey: string; models: string[] }) =>
+  request<LlmProvider>("/llm/providers", json("POST", body));
+export const llmUpdateProvider = (
+  id: string,
+  patch: { name?: string; baseUrl?: string; apiKey?: string; models?: string[] }
+) => request<LlmProvider>(`/llm/providers/${id}`, json("PUT", patch));
+export const llmDeleteProvider = (id: string) => request<void>(`/llm/providers/${id}`, { method: "DELETE" });
+export const llmSetActive = (providerId: string, model: string) =>
+  request<LlmSettings>("/llm/active", json("PUT", { providerId, model }));
+export const llmClearActive = () => request<LlmSettings>("/llm/active", { method: "DELETE" });
+export const llmTestProvider = (id: string, model?: string) =>
+  request<LlmTestResult>(`/llm/providers/${id}/test`, json("POST", { model }));

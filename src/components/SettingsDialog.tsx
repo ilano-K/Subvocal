@@ -1,20 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { ttsAudioUrl } from "../services/api";
 import Modal from "./Modal";
+import ModelsSettings from "./ModelsSettings";
+import { BTN_PRIMARY, BTN_QUIET, Spinner } from "./ui";
 import { useThemeStore } from "../stores/useThemeStore";
 import type { ThemeMode } from "../stores/useThemeStore";
 import { useAudioQueueStore } from "../stores/useAudioQueueStore";
 import { useTtsStore } from "../stores/useTtsStore";
 import { formatBytes, formatEta, narratorView } from "../utils/tts";
-
-const BTN_PRIMARY =
-  "inline-flex items-center justify-center gap-1.5 h-8 px-3.5 rounded-md bg-[#C2410C] dark:bg-[#f97316] dark:text-[#161311] text-white font-mono text-[11px] font-semibold uppercase tracking-wider shadow-sm hover:brightness-110 transition disabled:opacity-50 disabled:cursor-not-allowed";
-const BTN_QUIET =
-  "inline-flex items-center justify-center gap-1.5 h-8 px-3.5 rounded-md bg-white dark:bg-[#1e1b19] border border-[#E2D8CC] dark:border-[#352e29] text-[#2B211E] dark:text-[#e0c0b1] font-mono text-[11px] font-semibold uppercase tracking-wider hover:border-[#EA580C]/50 transition disabled:opacity-50 disabled:cursor-not-allowed";
-
-function Spinner() {
-  return <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>;
-}
 
 export default function SettingsDialog({ onClose }: { onClose: () => void }) {
   const health = useTtsStore((s) => s.health);
@@ -24,6 +17,7 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
   const expectingLoad = useTtsStore((s) => s.isExpectingLoad());
   const store = useTtsStore.getState();
 
+  const [tab, setTab] = useState<"general" | "models">("general");
   const themeMode = useThemeStore((s) => s.mode);
   const setThemeMode = useThemeStore((s) => s.setMode);
   const [confirmRemove, setConfirmRemove] = useState(false);
@@ -255,7 +249,35 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <Modal title="Settings" onClose={onClose}>
+    <Modal title="Settings" onClose={onClose} size={tab === "models" ? "lg" : "md"}>
+      <div role="tablist" className="flex gap-1 p-1 rounded-lg bg-[#F5EFE6] dark:bg-[#100e0c] border border-[#E2D8CC] dark:border-[#2d2723]">
+        {(
+          [
+            { id: "general", label: "General", icon: "tune" },
+            { id: "models", label: "AI models", icon: "smart_toy" },
+          ] as const
+        ).map((t) => (
+          <button
+            key={t.id}
+            role="tab"
+            aria-selected={tab === t.id}
+            onClick={() => setTab(t.id)}
+            className={`flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-md font-mono text-[11px] transition ${
+              tab === t.id
+                ? "bg-white dark:bg-[#25201C] text-[#C2410C] dark:text-[#f97316] shadow-sm font-semibold"
+                : "text-[#6E5F57] dark:text-[#a78b7d] hover:text-[#C2410C]"
+            }`}
+          >
+            <span className="material-symbols-outlined text-[15px]">{t.icon}</span>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "models" ? (
+        <ModelsSettings />
+      ) : (
+        <>
         <section className="space-y-3">
           <h3 className="font-mono text-[10px] uppercase tracking-wider text-[#6E5F57] dark:text-[#a78b7d]">Appearance</h3>
           <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-2">
@@ -325,6 +347,8 @@ export default function SettingsDialog({ onClose }: { onClose: () => void }) {
             </button>
           </div>
         )}
+        </>
+      )}
     </Modal>
   );
 }
