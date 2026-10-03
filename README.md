@@ -336,4 +336,6 @@ Issues and pull requests are welcome. Please:
 - Pronunciation: [espeak-ng](https://github.com/espeak-ng/espeak-ng) (GPL-3.0), bundled in the installer through `espeakng-loader`. Its source is available at that link.
 - Document conversion: [anydoc](https://github.com/firecrawl/anydoc) by Firecrawl (MIT).
 
+## License
+
 [MIT](LICENSE). You can use, change and share Subvocal, including commercially, as long as you keep the copyright notice.
