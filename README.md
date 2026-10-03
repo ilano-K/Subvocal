@@ -333,8 +333,7 @@ Issues and pull requests are welcome. Please:
 ## Credits
 
 - Voice model: [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) by hexgrad (Apache-2.0).
+- Pronunciation: [espeak-ng](https://github.com/espeak-ng/espeak-ng) (GPL-3.0), bundled in the installer through `espeakng-loader`. Its source is available at that link.
 - Document conversion: [anydoc](https://github.com/firecrawl/anydoc) by Firecrawl (MIT).
 
-## License
-
-No license has been chosen for this project yet. Until one is added, all rights are reserved by the author.
+[MIT](LICENSE). You can use, change and share Subvocal, including commercially, as long as you keep the copyright notice.
