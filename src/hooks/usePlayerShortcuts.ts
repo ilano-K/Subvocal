@@ -8,6 +8,7 @@ export function usePlayerShortcuts() {
       if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
       const t = e.target as HTMLElement | null;
       if (t && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName))) return;
+      if (t?.closest?.('[role="dialog"]')) return; // Space on a dialog button must not toggle playback
       const q = useAudioQueueStore.getState();
       if (!q.queue.length) return;
 

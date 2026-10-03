@@ -1,6 +1,12 @@
 import { useState, useRef } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useSessionStore, type SaveStatus } from "../stores/useSessionStore";
 import { useAudioQueueStore } from "../stores/useAudioQueueStore";
+import { useTtsStore } from "../stores/useTtsStore";
+import SaveStages from "./SaveStages";
+import { audioStage } from "../utils/stages";
+import type { StageState } from "../utils/stages";
+import { formatEta, narratorView, renderSecondsLeft } from "../utils/tts";
 import { parseDocument, extractConcepts, compileScript, flattenModule } from "../services/api";
 import type { Chunk, StudyStyle } from "../data/mockData";
 import { formatDuration, plainChunks, queueKey, roughEstimateSec } from "../utils/script";
@@ -109,9 +115,12 @@ const carryOver = (prev: Chunk[], next: Chunk[]) =>
 
 type Props = {
   onOpenLibrary?: () => void;
+  onOpenSettings?: () => void;
 };
 
-export default function StudyWorkspace({ onOpenLibrary }: Props) {
+const HINT_KEY = "subvocal-tts-hint-dismissed";
+
+export default function StudyWorkspace({ onOpenLibrary, onOpenSettings }: Props) {
   const {
     activeDeckId,
     fileName,
@@ -140,6 +149,32 @@ export default function StudyWorkspace({ onOpenLibrary }: Props) {
     setVoiceRate,
   } = useSessionStore();
   const playQueue = useAudioQueueStore((s) => s.play);
+  // Natural-voice progress for this script: how many sections are rendered, and the time left.
+  const natural = useTtsStore(
+    useShallow((s) =>
+      s.narratorActive() && s.health
+        ? { active: true, ready: chunks.filter((c) => s.clipFor(c)?.status === "ready").length, left: renderSecondsLeft(s.health) }
+        : { active: false, ready: 0, left: null as number | null }
+    )
+  );
+  // The first-listen hint: shown once something has played with the system voice, until dismissed.
+  const hintView = useTtsStore((s) => narratorView(s.health, s.reachable));
+  const hasPlayed = useAudioQueueStore((s) => s.queue.length > 0);
+  const [hintDismissed, setHintDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(HINT_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const dismissHint = () => {
+    setHintDismissed(true);
+    try {
+      localStorage.setItem(HINT_KEY, "1");
+    } catch {
+      // storage unavailable; the hint just comes back next time
+    }
+  };
 
   const [dragOver, setDragOver] = useState(false);
   // Index into uploadSteps while a file is being processed.
@@ -271,6 +306,17 @@ export default function StudyWorkspace({ onOpenLibrary }: Props) {
   };
 
   const hasScript = chunks.length > 0;
+  // Saved to the server, still saving, or only kept on this device.
+  const contentSaved = (hasContent: boolean): StageState =>
+    !hasContent ? "none" : saveStatus === "saved" ? "done" : saveStatus === "offline" ? "device" : "saving";
+  const stageHint = (hasContent: boolean, what: string) =>
+    !hasContent
+      ? `${what} not created yet.`
+      : saveStatus === "saved"
+      ? `${what} saved.`
+      : saveStatus === "offline"
+      ? "Saved on this device only."
+      : "Saving…";
   const writingFromScratch = scriptBusy === "write" || (scriptBusy === "start" && !transcript.trim());
   const estLabel =
     hasScript && estimatedSec != null ? formatDuration(estimatedSec) : `≈ ${formatDuration(roughEstimateSec(concepts, voiceRate))}`;
@@ -879,8 +925,34 @@ export default function StudyWorkspace({ onOpenLibrary }: Props) {
                     {saveLabels[saveStatus]}
                   </span>
                 )}
+                {fileName && (
+                  <SaveStages
+                    topics={{ state: contentSaved(concepts.length > 0), label: "Topics", hint: stageHint(concepts.length > 0, "Topics") }}
+                    script={{ state: contentSaved(hasScript), label: "Script", hint: stageHint(hasScript, "Script") }}
+                    audio={audioStage(natural.active, hasScript, natural.ready, chunks.length)}
+                  />
+                )}
                 {!hasScript && !scriptBusy && (
                   <span>No script yet — Start listening will write it first, which takes a moment.</span>
+                )}
+                {natural.active && hasScript && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[14px]">graphic_eq</span>
+                    Natural voice · {natural.ready} / {chunks.length} sections ready
+                    {natural.ready < chunks.length && natural.left != null && ` · ${formatEta(natural.left)}`}
+                  </span>
+                )}
+                {hintView === "download" && hasPlayed && !hintDismissed && onOpenSettings && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[14px]">record_voice_over</span>
+                    Want a more natural voice?
+                    <button onClick={onOpenSettings} className="underline text-[#C2410C] dark:text-[#ffb690] font-semibold">
+                      Get it in Settings
+                    </button>
+                    <button onClick={dismissHint} aria-label="Dismiss" className="ml-1 opacity-60 hover:opacity-100">
+                      <span className="material-symbols-outlined text-[13px]">close</span>
+                    </button>
+                  </span>
                 )}
               </div>
               <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">

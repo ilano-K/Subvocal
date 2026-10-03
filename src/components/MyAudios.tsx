@@ -1,4 +1,7 @@
 import { useMemo, useEffect } from "react";
+import SaveStages from "./SaveStages";
+import { audioStage, savedState } from "../utils/stages";
+import { useTtsStore } from "../stores/useTtsStore";
 import { useLibraryStore } from "../stores/useLibraryStore";
 import { useSessionStore } from "../stores/useSessionStore";
 import { useAudioQueueStore } from "../stores/useAudioQueueStore";
@@ -14,6 +17,17 @@ export default function MyAudios({ onEdit, onNew }: Props) {
   const loadDeck = useSessionStore((s) => s.loadDeck);
   const playQueue = useAudioQueueStore((s) => s.play);
   const playerVisible = useAudioQueueStore((s) => s.hudOpen && s.queue.length > 0);
+
+  const narratorActive = useTtsStore((s) => s.narratorActive());
+  const pendingWords = useTtsStore((s) => s.health?.pendingWords ?? 0);
+  const coverage = useTtsStore((s) => s.coverage);
+
+  // How much of each deck is already rendered. Refreshes when the list changes or the render queue moves.
+  useEffect(() => {
+    void useTtsStore.getState().refreshCoverage(
+      sessions.filter((d) => d.chunks.length > 0).map((d) => ({ id: d.id, texts: d.chunks.map((c) => c.text) }))
+    );
+  }, [sessions, narratorActive, pendingWords]);
 
   useEffect(() => {
     // Write pending edits first so the server list isn't older than what was just typed.
@@ -211,9 +225,24 @@ export default function MyAudios({ onEdit, onNew }: Props) {
                         <span className="material-symbols-outlined text-[12px] text-[#C2410C] dark:text-[#f97316]">
                           volume_up
                         </span>
-                        <span>Audio ready ({s.chunks.length} parts)</span>
+                        <span>Script ready ({s.chunks.length} parts)</span>
                       </span>
                     )}
+                  </div>
+                  <div className="mt-3">
+                    <SaveStages
+                      topics={{
+                        state: savedState(s.concepts.length > 0, !!s.isLocal),
+                        label: "Topics",
+                        hint: s.isLocal ? "Saved on this device only." : "Topics saved.",
+                      }}
+                      script={{
+                        state: savedState(!isDraft, !!s.isLocal),
+                        label: "Script",
+                        hint: isDraft ? "No script yet." : s.isLocal ? "Saved on this device only." : "Script saved.",
+                      }}
+                      audio={audioStage(narratorActive, !isDraft, coverage[s.id]?.ready ?? 0, coverage[s.id]?.total ?? s.chunks.length)}
+                    />
                   </div>
                 </div>
                 <div className="mt-4 pt-3 border-t border-[#F0E8DE] dark:border-[#2d2723] flex items-center justify-between gap-2">

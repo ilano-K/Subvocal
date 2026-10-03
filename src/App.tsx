@@ -3,11 +3,14 @@ import TopNav from "./components/TopNav";
 import StudyWorkspace from "./components/StudyWorkspace";
 import MyAudios from "./components/MyAudios";
 import FloatingHUD from "./components/FloatingHUD";
+import SettingsDialog from "./components/SettingsDialog";
 import { useAudioQueueStore } from "./stores/useAudioQueueStore";
 import { useSessionStore } from "./stores/useSessionStore";
 import { startAutosave } from "./stores/autosave";
 import { usePlaybackEngine } from "./hooks/usePlaybackEngine";
 import { usePlayerShortcuts } from "./hooks/usePlayerShortcuts";
+import { useTtsStatus } from "./hooks/useTtsStatus";
+import { useTtsTriggers } from "./hooks/useTtsTriggers";
 
 export default function App() {
   // HUD can also be opened standalone via ?hud=1 for Tauri second window simulation
@@ -32,9 +35,12 @@ function MainWindow() {
   const setHudOpen = useAudioQueueStore((s) => s.setHudOpen);
   const resetSession = useSessionStore((s) => s.resetSession);
   const [dark, setDark] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   usePlaybackEngine();
   usePlayerShortcuts();
+  useTtsStatus();
+  useTtsTriggers();
   useEffect(() => startAutosave(), []);
 
   useEffect(() => {
@@ -63,11 +69,12 @@ function MainWindow() {
         isPlaying={isPlaying}
         dark={dark}
         onToggleDark={() => setDark((v) => !v)}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
       {/* Bottom padding keeps the floating player from covering the page's last actions. */}
       <main className={`pt-11 ${playerVisible ? "pb-44" : ""}`}>
         {view === "workspace" ? (
-          <StudyWorkspace onOpenLibrary={() => setView("library")} />
+          <StudyWorkspace onOpenLibrary={() => setView("library")} onOpenSettings={() => setSettingsOpen(true)} />
         ) : (
           <MyAudios
             onEdit={() => setView("workspace")}
@@ -80,6 +87,7 @@ function MainWindow() {
       </main>
 
       {playerVisible && <FloatingHUD />}
+      {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
     </div>
   );
 }

@@ -1,3 +1,6 @@
+import { useTtsStore } from "../stores/useTtsStore";
+import RenderActivity from "./RenderActivity";
+
 type Props = {
   view: "workspace" | "library";
   onChangeView: (v: "workspace" | "library") => void;
@@ -8,9 +11,11 @@ type Props = {
   isPlaying: boolean;
   dark: boolean;
   onToggleDark: () => void;
+  onOpenSettings: () => void;
 };
 
-export default function TopNav({ view, onChangeView, onToggleHud, hudOpen, hasQueue, isPlaying, dark, onToggleDark }: Props) {
+export default function TopNav({ view, onChangeView, onToggleHud, hudOpen, hasQueue, isPlaying, dark, onToggleDark, onOpenSettings }: Props) {
+  const downloading = useTtsStore((s) => s.health?.install.state === "downloading");
   return (
     <header className="fixed top-0 left-0 w-full z-40 bg-[#FBF9F5]/90 dark:bg-[#181513]/90 backdrop-blur-md border-b border-[#E6DDD2] dark:border-[#2d2723] shadow-sm">
       <div className="h-11 w-full px-5 flex items-center justify-between">
@@ -39,6 +44,16 @@ export default function TopNav({ view, onChangeView, onToggleHud, hudOpen, hasQu
         </nav>
 
         <div className="flex items-center gap-2">
+          <RenderActivity onOpenSettings={onOpenSettings} />
+          <button
+            onClick={onOpenSettings}
+            aria-label="Settings"
+            title="Settings"
+            className="relative w-7 h-7 grid place-items-center rounded-md bg-white dark:bg-[#1e1b19] border border-[#E2D8CC] dark:border-[#352e29] text-[#6E5F57] dark:text-[#a78b7d] hover:text-[#C2410C] dark:hover:text-[#ffb690] hover:border-[#EA580C]/50 transition"
+          >
+            <span className="material-symbols-outlined text-[16px]">settings</span>
+            {downloading && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#EA580C] animate-pulse" />}
+          </button>
           <button
             onClick={onToggleDark}
             aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}

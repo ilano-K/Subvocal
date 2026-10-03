@@ -1,4 +1,6 @@
+import { useShallow } from "zustand/react/shallow";
 import { useAudioQueueStore } from "../stores/useAudioQueueStore";
+import { useTtsStore } from "../stores/useTtsStore";
 import { NARRATION_SPEEDS } from "../utils/speech";
 
 type Props = {
@@ -14,6 +16,7 @@ export default function FloatingHUD({ onExpand }: Props) {
     finished,
     repeatLeft,
     liveSnippet,
+    waiting,
     togglePlay,
     next,
     prev,
@@ -25,6 +28,10 @@ export default function FloatingHUD({ onExpand }: Props) {
     stepRate,
     pauseSec,
   } = useAudioQueueStore();
+  // Per-section render state for the readiness strip; null when the natural voice isn't in use.
+  const readiness = useTtsStore(
+    useShallow((s) => (s.narratorActive() ? queue.map((c) => s.clipFor(c)?.status ?? "none") : null))
+  );
   const cur = queue[index];
   const nextChunk = queue[index + 1];
   const curConcept = cur?.title ?? "--";
@@ -107,6 +114,22 @@ export default function FloatingHUD({ onExpand }: Props) {
               <span className="text-[#C2410C] dark:text-[#FFB690] font-mono text-[12px] font-semibold mr-2">✓</span>
               Finished all {queue.length} topics — press play to listen again from the start.
             </p>
+          ) : waiting ? (
+            <div className="flex items-center gap-3 min-w-0">
+              <p className="font-serif text-[14px] sm:text-[15px] text-[#1C1513] dark:text-[#F5F0EB] leading-snug truncate">
+                <span className="text-[#C2410C] dark:text-[#FFB690] font-mono text-[12px] font-semibold mr-2">
+                  §{index + 1}
+                </span>
+                <span className="material-symbols-outlined text-[14px] align-middle animate-spin mr-1">progress_activity</span>
+                Preparing this section in the natural voice…
+              </p>
+              <button
+                onClick={() => useTtsStore.getState().systemVoiceForThisSession()}
+                className="shrink-0 font-mono text-[10px] uppercase tracking-wider px-2 py-1 rounded border border-[#EA580C]/40 text-[#9B2F00] dark:text-[#FFB690] hover:bg-[#FFF7ED] dark:hover:bg-[#2D211A]"
+              >
+                Use system voice
+              </button>
+            </div>
           ) : (
             <p className="font-serif text-[14px] sm:text-[15px] text-[#1C1513] dark:text-[#F5F0EB] leading-snug truncate">
               <span className="text-[#C2410C] dark:text-[#FFB690] font-mono text-[12px] font-semibold mr-2">
@@ -209,6 +232,18 @@ export default function FloatingHUD({ onExpand }: Props) {
                   }`}
                 >
                   {i === index && isPlaying && <span className="absolute inset-0 bg-white/20 animate-pulse rounded-sm" />}
+                  {readiness && readiness[i] !== "none" && (
+                    <span
+                      aria-hidden
+                      className={`absolute bottom-0 inset-x-0 h-[3px] rounded-b-sm ${
+                        readiness[i] === "ready"
+                          ? "bg-emerald-500"
+                          : readiness[i] === "failed"
+                          ? "bg-rose-500"
+                          : "bg-amber-400 animate-pulse"
+                      }`}
+                    />
+                  )}
                 </button>
               ))}
             </div>

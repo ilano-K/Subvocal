@@ -17,6 +17,8 @@ type QueueState = {
   // Bumped whenever the current chunk must start speaking again from the top.
   playToken: number;
   liveSnippet: string;
+  // The natural voice is still preparing the current chunk, so nothing is audible yet.
+  waiting: boolean;
   rate: number;
   pauseSec: number;
   hudOpen: boolean;
@@ -39,11 +41,12 @@ type QueueState = {
   setPause: (s: number) => void;
   setHudOpen: (v: boolean) => void;
   setLiveSnippet: (s: string) => void;
+  setWaiting: (v: boolean) => void;
 };
 
 const at = (queue: Chunk[], i: number) => {
   const index = Math.max(0, Math.min(i, queue.length - 1));
-  return { index, repeatLeft: queue[index]?.reps ?? 1, liveSnippet: "" };
+  return { index, repeatLeft: queue[index]?.reps ?? 1, liveSnippet: "", waiting: false };
 };
 
 export const useAudioQueueStore = create<QueueState>((set, get) => ({
@@ -55,6 +58,7 @@ export const useAudioQueueStore = create<QueueState>((set, get) => ({
   repeatLeft: 1,
   playToken: 0,
   liveSnippet: "",
+  waiting: false,
   rate: 1,
   pauseSec: 2.5,
   hudOpen: false,
@@ -114,4 +118,5 @@ export const useAudioQueueStore = create<QueueState>((set, get) => ({
   setPause: (pauseSec) => set({ pauseSec }),
   setHudOpen: (hudOpen) => set({ hudOpen }),
   setLiveSnippet: (liveSnippet) => set({ liveSnippet }),
+  setWaiting: (waiting) => set({ waiting }),
 }));
