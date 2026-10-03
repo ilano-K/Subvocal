@@ -57,3 +57,6 @@ backend/skills/concept-extracting-skills.md
 
 # experiments
 experiments/
+# Packaged backend for the desktop app (npm run backend:build)
+backend-dist
+backend/build
