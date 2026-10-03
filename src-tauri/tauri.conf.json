@@ -3,13 +3,54 @@
   "productName": "Subvocal",
   "version": "0.1.0",
   "identifier": "com.subvocal.app",
-  "build": { "beforeDevCommand": "npm run dev", "devUrl": "http://localhost:5173", "beforeBuildCommand": "npm run build", "frontendDist": "../dist" },
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
   "app": {
     "windows": [
-      { "label": "main", "title": "Subvocal", "width": 1280, "height": 820, "decorations": true },
-      { "label": "hud", "title": "Subvocal Mini-HUD", "url": "/?hud=1", "width": 860, "height": 180, "decorations": false, "transparent": true, "alwaysOnTop": true, "skipTaskbar": true, "resizable": false }
+      {
+        "label": "main",
+        "title": "Subvocal",
+        "width": 1280,
+        "height": 820,
+        "decorations": true,
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows"
+      },
+      {
+        "label": "hud",
+        "title": "Subvocal Mini-HUD",
+        "url": "/?hud=1",
+        "width": 860,
+        "height": 240,
+        "decorations": false,
+        "transparent": true,
+        "visible": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false,
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows",
+        "shadow": false
+      }
     ],
-    "security": { "csp": null }
+    "security": {
+      "csp": null
+    }
   },
-  "bundle": { "active": true, "targets": "all", "icon": ["icons/icon.png"] }
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": {
+      "../backend-dist/subvocal-backend": "backend"
+    }
+  }
 }

@@ -7,14 +7,18 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "tauri": "tauri",
+    "preview": "vite preview",
+    "backend:build": "cd backend && pyinstaller subvocal-backend.spec --noconfirm --distpath ../backend-dist --workpath build"
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.12.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.12.1",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
