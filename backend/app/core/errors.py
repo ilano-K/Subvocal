@@ -24,3 +24,16 @@ class NotFoundError(AppError):
 
 class CompileFailed(AppError):
     """Raised when script compilation fails."""
+    
+# tts
+class TTSUnavailable(AppError):
+    """Narrator not installed, disabled, loading, or failed."""
+
+class TTSVoiceNotFound(AppError):
+    """Voice not installed"""
+
+class TTSInstallConflict(AppError):
+    """Install/uninstall requested while another is in progress."""
+
+class InsufficientDiskSpace(AppError):
+    """Not enough free space for the download."""

@@ -35,6 +35,17 @@ class Settings(BaseSettings):
     session_dir: Path = Path(".data/sessions")
     parse_cache_dir: Path = Path(".data/parse")
     database_path: Path = Path(".data/subvocal.db")
+    
+    # TTS (optional narrator)
+    tts_models_dir: Path = Path(".data/models/kokoro")
+    tts_cache_dir: Path = Path(".data/tts")
+    tts_prefs_path: Path = Path(".data/tts_prefs.json")
+    tts_default_voice: str = "af_heart"     # must be a key of VOICES in services/tts/manifest.py
+    tts_cache_max_mb: int = 2048
+    tts_threads: int | None = None          # None → max(1, cpu_count - 1)
+    tts_split_sentences: bool = True
+    tts_format: str = "ogg"                 # "ogg" (Vorbis) or "wav"
+    tts_autoload: bool = True               # set False in .env during backend dev (skips model load on --reload)
 
     model_config = SettingsConfigDict(
         env_file='.env',

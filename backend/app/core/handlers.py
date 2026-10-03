@@ -11,6 +11,10 @@ from app.core.errors import (
     ProcessingError,
     UnsupportedFileType,
     ValidationError,
+    TTSUnavailable,
+    TTSVoiceNotFound,
+    TTSInstallConflict,
+    InsufficientDiskSpace
 )
 
 ERROR_STATUS_CODES: dict[type[AppError], int] = {
@@ -22,6 +26,10 @@ ERROR_STATUS_CODES: dict[type[AppError], int] = {
     ProcessingError: status.HTTP_500_INTERNAL_SERVER_ERROR,
     NotFoundError: status.HTTP_404_NOT_FOUND,
     CompileFailed: status.HTTP_422_UNPROCESSABLE_CONTENT,
+    TTSUnavailable: status.HTTP_503_SERVICE_UNAVAILABLE,
+    TTSVoiceNotFound: status.HTTP_400_BAD_REQUEST,
+    TTSInstallConflict: status.HTTP_409_CONFLICT,
+    InsufficientDiskSpace: status.HTTP_507_INSUFFICIENT_STORAGE
 }
 
 async def app_error_handler(
