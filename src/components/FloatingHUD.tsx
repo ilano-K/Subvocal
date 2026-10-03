@@ -2,13 +2,18 @@ import { useShallow } from "zustand/react/shallow";
 import { useAudioQueueStore } from "../stores/useAudioQueueStore";
 import { useTtsStore } from "../stores/useTtsStore";
 import { NARRATION_SPEEDS } from "../utils/speech";
+import { popOutPlayer } from "../services/playerBridge";
 
 type Props = {
-  // Standalone HUD window only: return to the main app window.
+  // Player window only: bring the main app window to the front. Also what makes this the window version.
   onExpand?: () => void;
+  // Player window only: put the player back inside the app.
+  onDock?: () => void;
+  // Desktop app only: offer to move the player into its own window.
+  canPopOut?: boolean;
 };
 
-export default function FloatingHUD({ onExpand }: Props) {
+export default function FloatingHUD({ onExpand, onDock, canPopOut }: Props) {
   const {
     queue,
     index,
@@ -40,8 +45,13 @@ export default function FloatingHUD({ onExpand }: Props) {
   if (!queue.length) return null;
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[min(880px,95vw)]">
+    <div className={onExpand ? "w-full" : "fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[min(880px,95vw)]"}>
       <div className="bg-white dark:bg-[#1C1815] rounded-2xl border border-[#EA580C]/30 dark:border-[#483F38] shadow-[0_20px_40px_-10px_rgba(74,40,20,0.15)] dark:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.5)] p-[16px] flex flex-col gap-2 ring-1 ring-[#EA580C]/20 dark:ring-[#F97316]/20">
+        {onExpand && (
+          <div title="Drag anywhere on the player to move it" className="-mt-2 flex justify-center cursor-grab active:cursor-grabbing">
+            <span className="material-symbols-outlined text-[16px] leading-none text-[#8D7168] dark:text-[#A78B7D] pointer-events-none">drag_handle</span>
+          </div>
+        )}
         {/* Top telemetry bar */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 flex-wrap min-w-0">
@@ -75,26 +85,55 @@ export default function FloatingHUD({ onExpand }: Props) {
 
           <div className="flex items-center gap-1.5 shrink-0">
             {onExpand ? (
-              <button
-                onClick={onExpand}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FFF7ED] dark:bg-[#26201B] border border-[#FED7AA] dark:border-[#584237] hover:border-[#EA580C] dark:hover:border-[#F97316]/50 text-[#9B2F00] dark:text-[#F5F0EB] font-mono text-[10px]"
-              >
-                Open app
-                <span className="material-symbols-outlined text-[14px] text-[#EA580C] dark:text-[#FFB690]">
-                  open_in_full
-                </span>
-              </button>
+              <>
+                <button
+                  onClick={onExpand}
+                  title="Bring the app window to the front"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FFF7ED] dark:bg-[#26201B] border border-[#FED7AA] dark:border-[#584237] hover:border-[#EA580C] dark:hover:border-[#F97316]/50 text-[#9B2F00] dark:text-[#F5F0EB] font-mono text-[10px]"
+                >
+                  Open app
+                  <span className="material-symbols-outlined text-[14px] text-[#EA580C] dark:text-[#FFB690]">
+                    open_in_full
+                  </span>
+                </button>
+                {onDock && (
+                  <button
+                    onClick={onDock}
+                    title="Put the player back inside the app"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#FFF7ED] dark:bg-[#26201B] border border-[#FED7AA] dark:border-[#584237] hover:border-[#EA580C] dark:hover:border-[#F97316]/50 text-[#9B2F00] dark:text-[#F5F0EB] font-mono text-[10px]"
+                  >
+                    Dock
+                    <span className="material-symbols-outlined text-[14px] text-[#EA580C] dark:text-[#FFB690]">
+                      dock_to_bottom
+                    </span>
+                  </button>
+                )}
+              </>
             ) : (
-              <button
-                onClick={() => setHudOpen(false)}
-                title="Hide the player — audio keeps playing. Reopen it from Player in the top bar."
-                className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#FFF7ED] dark:bg-[#26201B] border border-[#FED7AA] dark:border-[#584237] hover:border-[#EA580C] dark:hover:border-[#F97316]/50 text-[#9B2F00] dark:text-[#F5F0EB] font-mono text-[10px]"
-              >
-                Hide
-                <span className="material-symbols-outlined text-[14px] text-[#EA580C] dark:text-[#FFB690]">
-                  keyboard_arrow_down
-                </span>
-              </button>
+              <>
+                {canPopOut && (
+                  <button
+                    onClick={() => void popOutPlayer()}
+                    title="Show the player in its own window that stays on top of other apps"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#FFF7ED] dark:bg-[#26201B] border border-[#FED7AA] dark:border-[#584237] hover:border-[#EA580C] dark:hover:border-[#F97316]/50 text-[#9B2F00] dark:text-[#F5F0EB] font-mono text-[10px]"
+                  >
+                    Pop out
+                    <span className="material-symbols-outlined text-[14px] text-[#EA580C] dark:text-[#FFB690]">
+                      picture_in_picture_alt
+                    </span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setHudOpen(false)}
+                  title="Hide the player — audio keeps playing. Reopen it from Player in the top bar."
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#FFF7ED] dark:bg-[#26201B] border border-[#FED7AA] dark:border-[#584237] hover:border-[#EA580C] dark:hover:border-[#F97316]/50 text-[#9B2F00] dark:text-[#F5F0EB] font-mono text-[10px]"
+                >
+                  Hide
+                  <span className="material-symbols-outlined text-[14px] text-[#EA580C] dark:text-[#FFB690]">
+                    keyboard_arrow_down
+                  </span>
+                </button>
+              </>
             )}
             <button
               onClick={stop}
@@ -156,14 +195,14 @@ export default function FloatingHUD({ onExpand }: Props) {
             <button
               onClick={prev}
               className="w-7 h-7 grid place-items-center rounded-md bg-[#FFF7ED] dark:bg-[#241F1B] border border-[#FED7AA] dark:border-[#483F38] text-[#9B2F00] dark:text-[#E0C0B1] hover:bg-[#FFEDD5] dark:hover:bg-[#2F2721] dark:hover:border-[#F97316]/60"
-              title="Previous topic (←)"
+              title={onExpand ? "Previous topic" : "Previous topic (←)"}
               aria-label="Previous topic"
             >
               <span className="material-symbols-outlined text-[15px]">skip_previous</span>
             </button>
             <button
               onClick={togglePlay}
-              title={isPlaying ? "Pause (Space)" : finished ? "Play again from the start (Space)" : "Play (Space)"}
+              title={(isPlaying ? "Pause" : finished ? "Play again from the start" : "Play") + (onExpand ? "" : " (Space)")}
               aria-label={isPlaying ? "Pause" : "Play"}
               className="w-8 h-8 grid place-items-center rounded-md bg-gradient-to-br from-[#F97316] to-[#EA580C] text-white border border-[#FDBA74] dark:border-[#FFB690]/40 shadow"
             >
@@ -174,7 +213,7 @@ export default function FloatingHUD({ onExpand }: Props) {
             <button
               onClick={next}
               className="w-7 h-7 grid place-items-center rounded-md bg-[#FFF7ED] dark:bg-[#241F1B] border border-[#FED7AA] dark:border-[#483F38] text-[#9B2F00] dark:text-[#E0C0B1] hover:bg-[#FFEDD5] dark:hover:bg-[#2F2721] dark:hover:border-[#F97316]/60"
-              title="Next topic (→)"
+              title={onExpand ? "Next topic" : "Next topic (→)"}
               aria-label="Next topic"
             >
               <span className="material-symbols-outlined text-[15px]">skip_next</span>
@@ -251,7 +290,7 @@ export default function FloatingHUD({ onExpand }: Props) {
               <span className="text-[#C2410C] dark:text-[#FFB690] font-semibold shrink-0">
                 Topic {index + 1} of {queue.length}
               </span>
-              <span className="hidden md:inline truncate">Space play/pause · ← → skip · R replay · &lt; &gt; speed</span>
+              {!onExpand && <span className="hidden md:inline truncate">Space play/pause · ← → skip · R replay · &lt; &gt; speed</span>}
             </div>
           </div>
         </div>

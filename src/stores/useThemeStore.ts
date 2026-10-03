@@ -27,3 +27,10 @@ export const useThemeStore = create<ThemeState>()(
     { name: "subvocal-theme" }
   )
 );
+
+// The desktop app's windows share one storage: when another window changes the theme, follow it.
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key === "subvocal-theme") void useThemeStore.persist.rehydrate();
+  });
+}
